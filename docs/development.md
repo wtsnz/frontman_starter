@@ -13,6 +13,8 @@ For a production-style local run, stop Phoenix, run `mix frontend.build`, and st
 `SUPERVISE_FRONTEND=true mix phx.server`. Open port 4000.
 The Nitro plugin's `devProxy` handles `/rpc`, `/auth` and `/health` in Vite mode; a plain
 `server.proxy` would run after Nitro's SSR middleware and miss these requests.
+The client dependency optimizer includes TanStack's runtime imports explicitly so the first
+page can hydrate without a dependency-discovery reload.
 
 | Command | Purpose |
 | --- | --- |
@@ -74,7 +76,8 @@ Elixir tests exercise Ash constraints, ownership policies, password login, logou
 idempotent seeds and the RPC CSRF contract. Playwright tests exercise login/logout, SSR HTML,
 CRUD, URL state, browser transport and mobile overflow. The gate exercises the supervised
 frontend build and then Vite with the same temporary Phoenix server. Unit-test data rolls back
-in the SQL sandbox; browser tests use a separate SQLite file and clean up their own tasks.
+in the SQL sandbox; Vite starts with `--force` so browser tests also cover a cold dependency cache.
+Browser tests use a separate SQLite file and clean up their own tasks.
 The temporary browser server uses a normal connection pool rather than the SQL sandbox, since
 its concurrent HTTP requests need separate connections. Database-writing unit tests use a single
 sandbox connection and run sequentially.

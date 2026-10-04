@@ -59,7 +59,7 @@ with log_path.open("w") as log:
         vite_env = dict(env, PORT=vite_port, BACKEND_URL=origin, PUBLIC_ORIGIN=vite_origin)
         vite_log_path = root / "tmp/e2e-vite.log"
         with vite_log_path.open("w") as vite_log:
-            vite = subprocess.Popen(["npm", "--prefix", "frontend", "run", "dev", "--", "--port", vite_port],
+            vite = subprocess.Popen(["npm", "--prefix", "frontend", "run", "dev", "--", "--force", "--port", vite_port],
                                     cwd=root, env=vite_env, stdout=vite_log, stderr=subprocess.STDOUT,
                                     start_new_session=True)
             try:
