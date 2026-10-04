@@ -1,0 +1,12 @@
+_build
+deps
+.git
+frontend/node_modules
+frontend/.output
+frontend/.tanstack
+frontend/dist
+frontend/test-results
+frontend/playwright-report
+.env*
+data
+tmp

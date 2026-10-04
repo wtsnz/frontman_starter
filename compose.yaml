@@ -1,0 +1,16 @@
+services:
+  app:
+    build: .
+    environment:
+      PHX_SERVER: "true"
+      DATABASE_PATH: /data/app.db
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE:?Set SECRET_KEY_BASE}
+      AUTH_TOKEN_SECRET: ${AUTH_TOKEN_SECRET:?Set AUTH_TOKEN_SECRET}
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-https://localhost}
+      PHX_HOST: ${PHX_HOST:-localhost}
+    ports:
+      - "127.0.0.1:4000:4000"
+    volumes:
+      - sqlite:/data
+volumes:
+  sqlite:

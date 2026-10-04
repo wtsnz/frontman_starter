@@ -1,0 +1,1 @@
+FrontmanStarter.Demo.seed!()

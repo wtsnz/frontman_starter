@@ -1,0 +1,24 @@
+name: CI
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: '29.0'
+          elixir-version: '1.20.3'
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+      - run: mix deps.get
+      - run: npm --prefix frontend ci
+      - run: npx playwright install --with-deps chromium
+        working-directory: frontend
+      - run: ./scripts/check
+      - run: docker build -t frontman-starter .

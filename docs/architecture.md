@@ -1,0 +1,78 @@
+# Architecture
+
+Read when changing routing, SSR, sessions, or data loading.
+
+```mermaid
+flowchart LR
+  Browser --> Phoenix
+  Phoenix -->|assets| Static[Plug.Static]
+  Phoenix -->|RPC and sessions| Router[Phoenix router]
+  Phoenix -->|pages| Proxy[Frontman.Proxy]
+  Proxy --> Pool[Supervised Node workers]
+  Pool -->|SSR loader| Router
+  Router --> Ash[Ash actions]
+  Ash --> SQLite
+```
+
+## One loader, two transports
+
+The index route's loader calls `loadTasks`. That uses the generated AshTypescript client with
+`rpcFetch`, a `createIsomorphicFn`:
+
+- During SSR, Node calls Phoenix's actual internal listener, forwarding the visitor's cookies.
+- During browser navigation, the browser calls same-origin `/rpc/run` directly.
+- Create, update, complete and delete use that same browser transport.
+
+Do not wrap these data functions in `createServerFn`. That would send browser navigation back
+through Node. TanStack Router handles loader caching and hydration. The filter belongs in URL
+search state, which the loader also uses, so reload and back/forward navigation restore it.
+
+Frontman doesn't enforce this pattern. Full page rendering and any Start server functions or
+server routes you add still require Node. Phoenix-hosted assets and direct API calls keep working
+when the Node pool is unavailable.
+
+## Sessions and CSRF
+
+Phoenix owns a signed, HTTP-only session cookie and protects RPC POSTs with its CSRF plug.
+`GET /auth/csrf` initializes the session and returns a token with `Cache-Control: no-store`.
+The browser obtains that token once and sends it with the generated client's requests.
+
+For SSR, the transport requests a token from Phoenix for each RPC call. It passes the visitor's
+cookies and merges any new session cookie into the internal RPC request. That handles a first
+visit with no cookie without sharing session state between users. Internal `Set-Cookie` responses
+are not copied onto the rendered page. The browser initializes its own session on its first API
+call. Authentication mutations run in the browser and reach Phoenix directly, so login renewal
+and logout cookies go straight to the browser. The transport resets its CSRF cache after each.
+
+`GET /auth/session` loads a user from the signed cookie and a locally stored, unexpired token.
+`POST /auth/login` verifies the password through Ash Authentication, renews the session and
+stores the token in an HTTP-only cookie. `POST /auth/logout` revokes that token and drops the
+cookie. JSON responses only include user ID and email; passwords and JWTs stay out of loader data.
+
+The load-user plug sets Ash's request actor. RPC requires login, and Task policies filter every
+read/update/destroy to `user_id == actor.id`. Create relates the actor automatically. Client
+input cannot choose an owner. These policies apply to direct Ash calls as well as HTTP requests.
+The frontend redirects signed-out users to `/login`; the API enforces access independently.
+
+Tailwind scans only `frontend/src`, explicitly configured in `styles.css`. This keeps the
+client and SSR stylesheet hashes consistent in both local and container builds, where generated
+output directories otherwise affect automatic source detection.
+
+Demo credentials are returned only when `:demo_seed?` is enabled, which is the default in
+development and test. Production requires explicit `SEED_DEMO=true`. SQLite runs with WAL and
+foreign keys enabled through the adapter. Keep the file on a writable local disk or volume.
+
+## Runtime ownership
+
+`FrontendPool` starts after the Phoenix endpoint, obtains its bound port, and passes `BACKEND_URL`
+and `PUBLIC_ORIGIN` to Frontman's workers. `BACKEND_URL` is private; `PUBLIC_ORIGIN` is trusted
+configuration used for redirects and absolute URLs. Client-provided forwarded headers cannot
+choose the public origin in the server entry.
+
+The endpoint serves built assets before `Frontman.Proxy` and places the proxy before body parsers.
+RPC, sessions and health paths bypass the proxy. The Node readiness handshake is private.
+The health controller counts only Frontman workers in `:ready` state, and checks the database.
+
+Frontman's pool has two workers and 16 slots per worker by default. Measure your workload before
+raising either. Frontman supplies health checks, backoff and drain; the application supplies the
+frontend build, Node binary, routes, deployment and domain.

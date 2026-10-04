@@ -1,0 +1,39 @@
+@import "tailwindcss" source(".");
+@font-face {
+  font-family: InterVariable;
+  src: url("@fontsource-variable/inter/files/inter-latin-wght-normal.woff2")
+    format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@theme {
+  --font-sans: InterVariable, sans-serif;
+  --font-sans--font-feature-settings:
+    "cv02", "cv03", "cv04", "cv11", "ss01", "ss03";
+}
+body {
+  position: relative;
+  color: var(--color-neutral-950);
+  background: white;
+}
+@utility page {
+  @apply mx-auto max-w-5xl px-5 sm:px-8;
+}
+@utility button-primary {
+  @apply relative inline-flex shrink-0 items-center justify-center rounded-md bg-emerald-800 px-3 py-2 text-base font-medium text-white hover:bg-emerald-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 disabled:cursor-wait disabled:opacity-50 sm:text-sm;
+}
+@utility button-secondary {
+  @apply relative inline-flex shrink-0 items-center justify-center rounded-md bg-neutral-950/5 px-3 py-2 text-base font-medium text-neutral-700 hover:bg-neutral-950/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 disabled:cursor-wait disabled:opacity-50 sm:text-sm;
+}
+@utility input {
+  @apply w-full rounded-md border border-neutral-950/15 bg-white px-3 py-2 text-base focus-visible:outline-2 focus-visible:-outline-offset-1 focus-visible:outline-emerald-700 sm:text-sm;
+}
+@media (pointer: coarse) {
+  button::after {
+    content: "";
+    position: absolute;
+    inset: -6px 0;
+    min-height: 48px;
+  }
+}
