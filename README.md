@@ -53,6 +53,8 @@ SUPERVISE_FRONTEND=true mix phx.server
 
 Stop the development Phoenix process before this command. Open [localhost:4000](http://localhost:4000).
 Phoenix now serves the built assets and sends page requests to two supervised Node workers.
+[/about](http://localhost:4000/about) is cached: Node renders it once and Phoenix serves it from
+memory after that. [Architecture](docs/architecture.md#cached-pages) explains how.
 The filter is URL state, so a reload restores the selected tab.
 
 ## Check the project

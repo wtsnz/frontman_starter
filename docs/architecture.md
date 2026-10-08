@@ -62,6 +62,36 @@ Demo credentials are returned only when `:demo_seed?` is enabled, which is the d
 development and test. Production requires explicit `SEED_DEMO=true`. SQLite runs with WAL and
 foreign keys enabled through the adapter. Keep the file on a writable local disk or volume.
 
+## Cached pages
+
+`/about` is the same for every visitor, so Frontman renders it once per server and serves it from
+memory. Its route opts in with `staticData`:
+
+```tsx
+export const Route = createFileRoute("/about")({
+  staticData: { pageCache: "public, max-age=300, stale-while-revalidate=86400" },
+  component: About,
+});
+```
+
+The root route reads `pageCache` from the deepest matched route that sets it, and sends it as
+Frontman's `x-frontman-cache` header in production builds. The page is fresh for five minutes,
+then served stale for up to a day while Frontman refreshes it in the background. See Frontman's
+[page cache guide](https://github.com/wtsnz/frontman#page-cache) for the directives and the
+rules about what is never stored.
+
+A cached page is served to everyone, so its server render must not depend on who asked. The
+root loader normally loads the session, and the header shows the signed-in email. On a cached
+page the root loader returns an empty session during SSR instead, and the browser loads the
+real one after hydration, so the email appears a moment later. Any loader you add to a cached
+route has to follow the same rule. Without it, the first visitor to render the page would
+decide whose email everyone else sees.
+
+`Set-Cookie` responses and non-200 pages are never cached, and Frontman keys entries on the host,
+path and query string, ignoring the `utm_*`, `gclid` and `fbclid` parameters configured in
+`config/runtime.exs`. Each server keeps its own copy, and a deploy starts empty. Set
+`FRONTEND_CACHE=false` to turn the cache off. Vite dev mode never caches.
+
 ## Runtime ownership
 
 `FrontendPool` starts after the Phoenix endpoint, obtains its bound port, and passes `BACKEND_URL`

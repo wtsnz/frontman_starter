@@ -23,6 +23,7 @@ defmodule FrontmanStarter.FrontendPool do
       directory: config[:directory],
       workers: config[:workers],
       max_concurrency: config[:max_concurrency],
+      cache: config[:cache],
       env: [{"BACKEND_URL", "http://#{host}:#{port}"}, {"PUBLIC_ORIGIN", config[:public_origin]}]
     )
   end

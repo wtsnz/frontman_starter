@@ -46,7 +46,7 @@ defmodule FrontmanStarter.MixProject do
       {:ash_sqlite, "~> 0.2.19"},
       {:simple_sat, "~> 0.1"},
       {:ash_typescript, "~> 0.18.3"},
-      {:frontman, github: "wtsnz/frontman", ref: "179d2f0374c5a273c396e976b95e6fda4beffaf6"},
+      {:frontman, github: "wtsnz/frontman", ref: "cf10c2e571c31225cf02d6787d4f910ffc0ae903"},
       {:phoenix_ecto, "~> 4.5"},
       {:ecto_sql, "~> 3.13"},
       {:telemetry_metrics, "~> 1.0"},

@@ -44,6 +44,14 @@ config :frontman_starter, :frontend,
   enabled: frontend?,
   workers: String.to_integer(System.get_env("FRONTEND_WORKERS", "2")),
   max_concurrency: String.to_integer(System.get_env("FRONTEND_MAX_CONCURRENCY", "16")),
+  # Pages whose route sets staticData.pageCache are served from memory. FRONTEND_CACHE=false
+  # turns that off. Campaign parameters don't change a page, so they share one entry.
+  cache:
+    if(System.get_env("FRONTEND_CACHE", "true") == "true",
+      do: [
+        query: {:except, ~w(utm_source utm_medium utm_campaign utm_term utm_content gclid fbclid)}
+      ]
+    ),
   node:
     System.get_env(
       "NODE_BINARY",

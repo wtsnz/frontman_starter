@@ -43,6 +43,9 @@ Keep SQLite on local disk, run one application instance per database, and back i
 backup API rather than copying an open file. For multiple hosts or heavier concurrent writes,
 switch the resources and repo to AshPostgres and generate new migrations before deployment.
 
+Each server caches pages marked with `staticData.pageCache` in memory, up to 10,000 pages or
+64 MB, and starts empty on every deploy. See [Cached pages](architecture.md#cached-pages).
+
 `GET /health/ready` reports the database and ready worker count. Its HTTP status is 503 if either
 is unavailable. A saturated pool rejects individual pages without changing readiness.
 
