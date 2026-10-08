@@ -6,11 +6,16 @@ import {
   Scripts,
   useRouter,
 } from "@tanstack/react-router";
-import { getSession, logout } from "../lib/auth";
-import { useState } from "react";
+import { deferredSession, getSession, logout } from "../lib/auth";
+import { pageCache, pageCacheHeaders } from "../lib/page-cache";
+import { useEffect, useState } from "react";
 import stylesheet from "../styles.css?url";
 export const Route = createRootRoute({
-  loader: getSession,
+  beforeLoad: ({ matches }) => ({ cached: pageCache(matches) !== undefined }),
+  // A cached page is served to everyone, so its server render must not know who asked.
+  loader: ({ context }) =>
+    context.cached && import.meta.env.SSR ? deferredSession : getSession(),
+  headers: ({ matches }) => pageCacheHeaders(matches),
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -25,8 +30,12 @@ export const Route = createRootRoute({
   component: Root,
 });
 function Root() {
-  const { user } = Route.useLoaderData();
+  const { user, deferred } = Route.useLoaderData();
   const router = useRouter();
+  // After hydrating a cached page, load the session in the browser.
+  useEffect(() => {
+    if (deferred) void router.invalidate();
+  }, [deferred, router]);
   const [busy, setBusy] = useState(false),
     [error, setError] = useState<string>();
   async function signOut() {
@@ -50,13 +59,18 @@ function Root() {
         <div className="isolate min-h-dvh">
           <header className="border-b border-neutral-950/10">
             <div className="page flex min-h-20 items-center justify-between gap-6">
-              <a
-                href="/"
-                aria-label="Homepage"
-                className="font-semibold tracking-tight"
-              >
-                Frontman Starter
-              </a>
+              <div className="flex items-center gap-6">
+                <a
+                  href="/"
+                  aria-label="Homepage"
+                  className="font-semibold tracking-tight"
+                >
+                  Frontman Starter
+                </a>
+                <Link to="/about" className="text-sm text-neutral-600">
+                  About
+                </Link>
+              </div>
               {user && (
                 <nav
                   aria-label="Main"

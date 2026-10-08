@@ -64,6 +64,15 @@ The complete rename should be reviewed as an ordinary code change, then verified
 `./scripts/check` and a release build. Keep the generated Ash client names derived from your
 resources. Replace `Workspace.Task` and the task UI with your own domain.
 
+## Cache a page
+
+For a page whose HTML is the same for every visitor, add
+`staticData: { pageCache: "public, max-age=300" }` to its route. Check every loader in its tree:
+none may read cookies or the session during SSR. The root route already defers the session on
+cached pages. Read [Cached pages](architecture.md#cached-pages) first. The cache runs only in the
+supervised build, so test it with `SUPERVISE_FRONTEND=true mix phx.server` and look for
+`x-frontman-cache-status: hit` on the second request.
+
 ## Components
 
 `TaskEditor` uses Base UI Dialog and Input. `DeleteTask` uses AlertDialog. The status filter uses
@@ -74,7 +83,7 @@ and small-screen layouts. Tailwind utilities and local styles provide their appe
 
 Elixir tests exercise Ash constraints, ownership policies, password login, logout revocation,
 idempotent seeds and the RPC CSRF contract. Playwright tests exercise login/logout, SSR HTML,
-CRUD, URL state, browser transport and mobile overflow. The gate exercises the supervised
+CRUD, URL state, browser transport, the page cache and mobile overflow. The gate exercises the supervised
 frontend build and then Vite with the same temporary Phoenix server. Unit-test data rolls back
 in the SQL sandbox; Vite starts with `--force` so browser tests also cover a cold dependency cache.
 Browser tests use a separate SQLite file and clean up their own tasks.

@@ -7,7 +7,15 @@ export interface User {
 export interface Session {
   user: User | null;
   demoCredentials: { email: string; password: string } | null;
+  // The server left the session out of a cached page; the browser loads it.
+  deferred?: boolean;
 }
+// What a cached page renders on the server: nobody signed in.
+export const deferredSession: Session = {
+  user: null,
+  demoCredentials: null,
+  deferred: true,
+};
 export async function getSession(): Promise<Session> {
   const response = await rpcFetch("/auth/session");
   if (!response.ok) throw new Error("Could not load your session.");

@@ -32,6 +32,52 @@ test("full pages contain SSR HTML and assets come from Phoenix", async ({
   expect((await request.get("/__frontend/ready")).status()).toBe(404);
 });
 
+test("a cached page is rendered once and never carries the visitor's session", async ({
+  playwright,
+  baseURL,
+}) => {
+  // A query string of its own, so this test starts with an empty entry.
+  const path = `/about?e2e=${Date.now()}`;
+  const signedIn = await playwright.request.newContext({ baseURL });
+  const csrf = await signedIn.get("/auth/csrf");
+  await signedIn.post("/auth/login", {
+    headers: { "x-csrf-token": (await csrf.json()).token },
+    data: { email: "demo@example.com", password: "starter-password" },
+  });
+
+  const first = await signedIn.get(path);
+  expect(first.headers()["x-frontman-cache-status"]).toBe("miss");
+  expect(first.headers()["x-frontman-cache"]).toBeUndefined();
+  expect(await first.text()).not.toContain("demo@example.com");
+
+  const anonymous = await playwright.request.newContext({ baseURL });
+  const second = await anonymous.get(path);
+  expect(second.headers()["x-frontman-cache-status"]).toBe("hit");
+  const html = await second.text();
+  expect(html).toContain("About this starter");
+  expect(html).not.toContain("demo@example.com");
+
+  const revalidated = await anonymous.get(path, {
+    headers: { "if-none-match": second.headers()["etag"] },
+  });
+  expect(revalidated.status()).toBe(304);
+  await signedIn.dispose();
+  await anonymous.dispose();
+});
+
+test("a cached page shows who is signed in once it loads", async ({ page }) => {
+  await signIn(page);
+  await page.goto("/about");
+  await expect(
+    page.getByRole("heading", { name: "About this starter" }),
+  ).toBeVisible();
+  await expect(
+    page
+      .getByRole("navigation", { name: "Main" })
+      .getByText("demo@example.com"),
+  ).toBeVisible();
+});
+
 test("CRUD and navigation call Ash directly, and filter survives reload", async ({
   page,
 }) => {
