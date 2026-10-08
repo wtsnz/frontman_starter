@@ -8,9 +8,15 @@ Read when building or operating a release.
 docker build -t frontman-starter .
 ```
 
-The Dockerfile builds the Start frontend and an Elixir release, copies the frontend into the
-release's `priv/frontend`, and uses a Node-equipped runtime with `ps` and `kill`. Only Phoenix's
-port 4000 is public; worker ports are private loopback listeners.
+The Dockerfile builds an Elixir release that carries its own Node. `mix assets.deploy` runs
+Frontman's `mix frontman.package`, which downloads the Node version pinned in
+`config :frontman, :package`, checks it against Node's published checksums, builds the frontend
+with it, and copies the `node` binary to `priv/node` and the build to `priv/frontend`. The build
+stage needs no Node of its own; BuildKit cache mounts keep the Node archive and npm's cache
+between builds. The runtime is a plain Debian image with `ps`, `kill` and the libraries Node
+links. Only Phoenix's port 4000 is public; worker ports are private loopback listeners.
+
+Change Node by updating `node_version` in `config/config.exs` and `.mise.toml` together.
 
 Provide `DATABASE_PATH`, `SECRET_KEY_BASE`, `AUTH_TOKEN_SECRET`, `PUBLIC_ORIGIN` and `PHX_HOST`.
 Generate two separate secrets with `mix phx.gen.secret`. Set `DATABASE_PATH=/data/app.db` and
@@ -42,9 +48,15 @@ is unavailable. A saturated pool rejects individual pages without changing readi
 
 ## Build without Docker
 
-Build the frontend, copy `frontend/.output` into `priv/frontend/.output`, and build with
-`MIX_ENV=prod mix release`. Install Node on the target host and set `NODE_BINARY` to its absolute
-path. The host needs `ps`, `kill` and Node's shared libraries.
+Build on the platform the release runs on, since Node is downloaded for the build machine:
+
+```sh
+MIX_ENV=prod mix assets.deploy
+MIX_ENV=prod mix release
+```
+
+The release starts its workers with `priv/node/bin/node`. Set `NODE_BINARY` to an absolute path
+to use another Node. The host needs `ps`, `kill`, glibc and `libstdc++`.
 
 The starter pins Frontman to a public Git commit. Update that ref deliberately, fetch dependencies,
 and run the gate before adopting a new runtime revision.

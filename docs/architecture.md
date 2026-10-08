@@ -74,5 +74,5 @@ RPC, sessions and health paths bypass the proxy. The Node readiness handshake is
 The health controller counts only Frontman workers in `:ready` state, and checks the database.
 
 Frontman's pool has two workers and 16 slots per worker by default. Measure your workload before
-raising either. Frontman supplies health checks, backoff and drain; the application supplies the
-frontend build, Node binary, routes, deployment and domain.
+raising either. Frontman supplies health checks, backoff and drain, and packages Node and the
+frontend build into the release; the application supplies routes, deployment and domain.

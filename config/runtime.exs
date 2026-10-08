@@ -44,7 +44,14 @@ config :frontman_starter, :frontend,
   enabled: frontend?,
   workers: String.to_integer(System.get_env("FRONTEND_WORKERS", "2")),
   max_concurrency: String.to_integer(System.get_env("FRONTEND_MAX_CONCURRENCY", "16")),
-  node: System.get_env("NODE_BINARY", System.find_executable("node") || "node"),
+  node:
+    System.get_env(
+      "NODE_BINARY",
+      if(config_env() == :prod,
+        do: Path.join(priv, "node/bin/node"),
+        else: System.find_executable("node") || "node"
+      )
+    ),
   directory:
     System.get_env(
       "FRONTEND_DIR",
