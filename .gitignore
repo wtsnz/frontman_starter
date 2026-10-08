@@ -32,6 +32,9 @@ frontman_starter-*.tar
 /frontend/dist/
 /frontend/test-results/
 /frontend/playwright-report/
+# Node and the frontend build, copied into priv by `mix assets.deploy`.
+/priv/node/
+/priv/frontend/
 .env
 .DS_Store
 /data/*.db*

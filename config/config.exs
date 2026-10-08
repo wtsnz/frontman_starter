@@ -49,6 +49,10 @@ config :frontman_starter, :frontend,
   directory: Path.expand("../frontend", __DIR__),
   public_origin: "http://localhost:4000"
 
+# `mix assets.deploy` downloads this Node, builds the frontend with it, and bundles both in the
+# release. Keep it in step with .mise.toml.
+config :frontman, :package, node_version: "22.22.3"
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"
